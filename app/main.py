@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
@@ -14,11 +15,20 @@ from app.api.status import router as status_router
 from app.api.updates import router as updates_router
 from app.api.users import router as users_router
 from app.config import settings
+from app.db import init_db
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    yield
+
 
 app = FastAPI(
     title=settings.app_name,
     description="Central API backend for Aither Tech applications.",
     version=settings.app_version,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
