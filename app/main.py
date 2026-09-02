@@ -7,6 +7,7 @@ from app.api.ai import router as ai_router
 from app.api.apps import router as apps_router
 from app.api.auth import router as auth_router
 from app.api.status import router as status_router
+from app.api.updates import router as updates_router
 from app.config import settings
 
 app = FastAPI(
@@ -27,6 +28,7 @@ app.include_router(status_router)
 app.include_router(auth_router)
 app.include_router(ai_router)
 app.include_router(apps_router)
+app.include_router(updates_router)
 
 
 @app.get("/")
