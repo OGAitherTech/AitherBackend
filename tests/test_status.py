@@ -1,0 +1,14 @@
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+client = TestClient(app)
+
+
+def test_root_metadata():
+    response = client.get("/")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["name"] == "AitherBackend"
+    assert body["status"] == "online"
+    assert body["version"] == "1.0.0"
