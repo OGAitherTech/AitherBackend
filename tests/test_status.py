@@ -11,4 +11,4 @@ def test_root_metadata():
     body = response.json()
     assert body["name"] == "AitherBackend"
     assert body["status"] == "online"
-    assert body["version"] == "1.0.0"
+    assert body["version"] == "2.1.0"
