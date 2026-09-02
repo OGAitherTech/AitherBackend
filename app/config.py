@@ -3,9 +3,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "AitherBackend"
-    app_version: str = "1.0.0"
+    app_version: str = "2.0.0"
     environment: str = "development"
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
+    database_url: str = "sqlite:///./aither.db"
+    session_ttl_hours: int = 168
+    secure_cookies: bool = False
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
