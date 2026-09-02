@@ -10,4 +10,4 @@ def test_public_config():
     assert response.status_code == 200
     body = response.json()
     assert body["app_name"] == "AitherBackend"
-    assert body["app_version"] == "1.0.0"
+    assert body["app_version"] == "2.1.0"
