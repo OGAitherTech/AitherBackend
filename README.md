@@ -10,6 +10,8 @@ AitherBackend now has a working FastAPI foundation with:
 - Service status API
 - Authentication API foundation
 - Aither AI gateway foundation
+- Aither app registry foundation
+- Update service foundation
 - Configurable CORS
 - Environment-based settings
 - Interactive OpenAPI/Swagger docs
@@ -18,7 +20,7 @@ AitherBackend now has a working FastAPI foundation with:
 - Automated API tests
 - GitHub Actions CI
 
-FastAPI provides automatic interactive API documentation at `/docs` and OpenAPI schema generation. See the official FastAPI documentation for details. citeturn0search0turn0search1
+FastAPI provides automatic interactive API documentation and OpenAPI schema generation. citeturn0search0turn0search1
 
 ## API
 
@@ -32,6 +34,9 @@ FastAPI provides automatic interactive API documentation at `/docs` and OpenAPI 
 | `POST /api/auth/logout` | Logout foundation |
 | `GET /api/ai/models` | Available AI models |
 | `POST /api/ai/chat` | AI chat gateway foundation |
+| `GET /api/apps` | Aither app registry |
+| `POST /api/apps` | Register an app |
+| `GET /api/updates` | Available app updates |
 | `GET /docs` | Interactive Swagger API docs |
 | `GET /redoc` | ReDoc API docs |
 
@@ -70,13 +75,14 @@ Provider/API secrets should stay server-side and be supplied through environment
 
 - Real authentication and user accounts
 - Secure AI provider integration
-- App registry and app configuration
+- App registry database storage
 - Settings synchronization
 - Persistent database layer
 - Token/session management
 - Rate limiting
 - Request logging and observability
 - Production security headers
-- Update/version service
+- Real update/version distribution
 - Notifications
 - Expanded automated tests
+- Production deployment configuration
