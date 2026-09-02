@@ -2,9 +2,17 @@
 
 The central backend API for Aither Tech applications.
 
-## v2 account foundation
+## 🌐 AitherTech site
 
-AitherBackend now includes a real persistent account/session foundation in addition to the existing FastAPI APIs.
+**GitHub Pages:** https://ogaithertech.github.io/AitherTech/
+
+The Pages site is the public AitherTech frontend. AitherBackend provides the API foundation behind future connected account and application features.
+
+> **Important:** The backend is not claimed to be publicly deployed just because the frontend is on GitHub Pages. Live API connectivity depends on an actual backend deployment and matching CORS configuration.
+
+## v2.0 account foundation
+
+AitherBackend includes a persistent account/session foundation in addition to the existing FastAPI APIs.
 
 ### Included
 
@@ -62,6 +70,12 @@ fastapi dev app/main.py
 
 The API will be available at `http://127.0.0.1:8000` and the interactive docs at `http://127.0.0.1:8000/docs`.
 
+## Connecting the Pages frontend
+
+For local development, configure the frontend to call the local API and send cookies with requests. For a deployed GitHub Pages frontend, the backend must be deployed at a real HTTPS URL and that URL must be added to the frontend configuration.
+
+The backend CORS configuration must include the actual frontend origin. Do not put private API/provider keys in the Pages frontend.
+
 ## Docker
 
 ```bash
@@ -79,6 +93,7 @@ For production, enable secure cookies with `SECURE_COOKIES=true` and use HTTPS. 
 
 ## Roadmap
 
+- Connect AitherTech account pages to the deployed backend
 - PostgreSQL production adapter and migrations
 - Email verification delivery
 - Password reset delivery
