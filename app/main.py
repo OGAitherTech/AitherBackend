@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.ai import router as ai_router
 from app.api.apps import router as apps_router
 from app.api.auth import router as auth_router
+from app.api.config import router as config_router
 from app.api.health import router as health_router
 from app.api.notifications import router as notifications_router
 from app.api.status import router as status_router
@@ -35,6 +36,7 @@ app.include_router(updates_router)
 app.include_router(health_router)
 app.include_router(users_router)
 app.include_router(notifications_router)
+app.include_router(config_router)
 
 
 @app.get("/")
