@@ -7,6 +7,7 @@ The central backend API for Aither Tech applications.
 AitherBackend now has a working FastAPI foundation with:
 
 - Health and version APIs
+- Dependency health endpoint
 - Service status API
 - Authentication API foundation
 - Aither AI gateway foundation
@@ -17,8 +18,11 @@ AitherBackend now has a working FastAPI foundation with:
 - Interactive OpenAPI/Swagger docs
 - ReDoc docs
 - Docker support
+- Render deployment configuration
 - Automated API tests
 - GitHub Actions CI
+- Developer Makefile
+- Security and contribution guides
 
 FastAPI provides automatic interactive API documentation and OpenAPI schema generation. citeturn0search0turn0search1
 
@@ -28,6 +32,7 @@ FastAPI provides automatic interactive API documentation and OpenAPI schema gene
 | --- | --- |
 | `GET /` | Backend information |
 | `GET /api/health` | Health check |
+| `GET /api/health/dependencies` | Dependency health |
 | `GET /api/version` | API version |
 | `GET /api/status` | Service status |
 | `POST /api/auth/login` | Authentication foundation |
