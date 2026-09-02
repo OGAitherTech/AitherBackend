@@ -2,48 +2,45 @@
 
 The central backend API for Aither Tech applications.
 
-## v1 foundation
+## v2 account foundation
 
-AitherBackend now has a working FastAPI foundation with:
+AitherBackend now includes a real persistent account/session foundation in addition to the existing FastAPI APIs.
 
-- Health and version APIs
-- Dependency health endpoint
-- Service status API
-- Authentication API foundation
-- Aither AI gateway foundation
-- Aither app registry foundation
-- Update service foundation
+### Included
+
+- FastAPI API
+- Persistent SQLite database by default
+- Account registration
+- Secure password hashing using Python's built-in `scrypt`
+- Server-side opaque sessions
+- HttpOnly session cookie
+- Login and logout
+- Session inspection with `GET /api/auth/session`
+- Existing health, status, AI, apps, updates, notifications, config, and OpenAPI APIs
 - Configurable CORS
 - Environment-based settings
-- Interactive OpenAPI/Swagger docs
-- ReDoc docs
 - Docker support
 - Render deployment configuration
 - Automated API tests
 - GitHub Actions CI
-- Developer Makefile
-- Security and contribution guides
 
-FastAPI provides automatic interactive API documentation and OpenAPI schema generation. citeturn0search0turn0search1
-
-## API
+## Authentication API
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /` | Backend information |
-| `GET /api/health` | Health check |
-| `GET /api/health/dependencies` | Dependency health |
-| `GET /api/version` | API version |
-| `GET /api/status` | Service status |
-| `POST /api/auth/login` | Authentication foundation |
-| `POST /api/auth/logout` | Logout foundation |
-| `GET /api/ai/models` | Available AI models |
-| `POST /api/ai/chat` | AI chat gateway foundation |
-| `GET /api/apps` | Aither app registry |
-| `POST /api/apps` | Register an app |
-| `GET /api/updates` | Available app updates |
-| `GET /docs` | Interactive Swagger API docs |
-| `GET /redoc` | ReDoc API docs |
+| `POST /api/auth/register` | Create an account and start a session |
+| `POST /api/auth/login` | Authenticate an account |
+| `POST /api/auth/logout` | End the current session |
+| `GET /api/auth/session` | Check the current session |
+| `GET /api/users/me` | Existing user endpoint; authentication integration is being migrated to the session foundation |
+
+Registration requires a name, email, and password of at least 8 characters.
+
+## Database
+
+The default database is a local SQLite file at `./aither.db`. Set `DATABASE_URL` to another supported SQLite URL when deploying or developing.
+
+No users or fake production data are seeded into the repository.
 
 ## Run locally
 
@@ -72,22 +69,26 @@ docker build -t aither-backend .
 docker run --rm -p 8000:8000 aither-backend
 ```
 
-## Security direction
+## Security
 
-Provider/API secrets should stay server-side and be supplied through environment variables or a secrets manager. Do not put private provider keys into Aither frontend apps.
+Provider/API secrets stay server-side and must be supplied through environment variables or a secrets manager. Never put private provider keys into Aither frontend applications.
+
+Session tokens are stored only as SHA-256 hashes in the database. Passwords are stored as salted `scrypt` hashes, never plaintext.
+
+For production, enable secure cookies with `SECURE_COOKIES=true` and use HTTPS. Restrict `CORS_ORIGINS` to the actual Aither frontend origins.
 
 ## Roadmap
 
-- Real authentication and user accounts
-- Secure AI provider integration
-- App registry database storage
-- Settings synchronization
-- Persistent database layer
-- Token/session management
-- Rate limiting
+- PostgreSQL production adapter and migrations
+- Email verification delivery
+- Password reset delivery
+- CSRF strategy for browser-based state-changing requests
+- Stronger auth rate limiting
 - Request logging and observability
 - Production security headers
 - Real update/version distribution
-- Notifications
-- Expanded automated tests
-- Production deployment configuration
+- Notifications delivery
+- Expanded integration tests
+- Production deployment and monitoring
+
+Features on the roadmap are not represented as live services until they are implemented and deployed.
