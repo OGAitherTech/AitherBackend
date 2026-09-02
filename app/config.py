@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./aither.db"
     session_ttl_hours: int = 168
     secure_cookies: bool = False
-    cookie_samesite: str = "lax"
+    cookie_samesite: str = "none"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     def session_cookie_samesite(self) -> str:
         value = self.cookie_samesite.strip().lower()
         if value not in {"lax", "strict", "none"}:
+            return "lax"
+        if value == "none" and not self.secure_cookies:
             return "lax"
         return value
 
