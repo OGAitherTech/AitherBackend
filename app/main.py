@@ -1,20 +1,32 @@
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import settings
 
 app = FastAPI(
-    title="AitherBackend",
+    title=settings.app_name,
     description="Central API backend for Aither Tech applications.",
-    version="1.0.0",
+    version=settings.app_version,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 
 @app.get("/")
 async def root() -> dict[str, str]:
     return {
-        "name": "AitherBackend",
+        "name": settings.app_name,
         "status": "online",
-        "version": app.version,
+        "version": settings.app_version,
+        "environment": settings.environment,
         "docs": "/docs",
     }
 
@@ -23,11 +35,11 @@ async def root() -> dict[str, str]:
 async def health() -> dict[str, object]:
     return {
         "status": "healthy",
-        "service": "AitherBackend",
+        "service": settings.app_name,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
 @app.get("/api/version")
 async def version() -> dict[str, str]:
-    return {"version": app.version}
+    return {"version": settings.app_version}
