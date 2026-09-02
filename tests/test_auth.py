@@ -13,7 +13,7 @@ def test_login_unknown_user():
         json={"email": "test@example.com", "password": "password"},
     )
     assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid email or password"
+    assert response.json()["detail"] == "Invalid email or password."
 
 
 def test_logout():
