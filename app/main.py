@@ -14,6 +14,7 @@ from app.api.notifications import router as notifications_router
 from app.api.status import router as status_router
 from app.api.updates import router as updates_router
 from app.api.users import router as users_router
+from app.api.weather import router as weather_router
 from app.config import settings
 from app.db import init_db
 
@@ -49,26 +50,17 @@ app.include_router(healthz_router)
 app.include_router(users_router)
 app.include_router(notifications_router)
 app.include_router(config_router)
+app.include_router(weather_router)
 
 
 @app.get("/")
 async def root() -> dict[str, str]:
-    return {
-        "name": settings.app_name,
-        "status": "online",
-        "version": settings.app_version,
-        "environment": settings.environment,
-        "docs": "/docs",
-    }
+    return {"name": settings.app_name, "status": "online", "version": settings.app_version, "environment": settings.environment, "docs": "/docs"}
 
 
 @app.get("/api/health")
 async def health() -> dict[str, object]:
-    return {
-        "status": "healthy",
-        "service": settings.app_name,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
+    return {"status": "healthy", "service": settings.app_name, "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/api/version")
