@@ -59,5 +59,13 @@ def init_db() -> None:
                 event TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS user_app_data (
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                app_id TEXT NOT NULL,
+                data_json TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (user_id, app_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_app_data_user_id ON user_app_data(user_id);
             """
         )
