@@ -6,7 +6,7 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Cookie, HTTPException, Response
+from fastapi import APIRouter, Cookie, Header, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from app.config import settings
@@ -69,6 +69,33 @@ def set_session_cookie(response: Response, token: str) -> None:
     )
 
 
+def bearer_token(authorization: str | None) -> str | None:
+    if not authorization:
+        return None
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        return None
+    return token.strip()
+
+
+def session_token(aither_session: str | None, authorization: str | None) -> str | None:
+    return bearer_token(authorization) or aither_session
+
+
+def authenticated_user(aither_session: str | None, authorization: str | None) -> dict[str, object] | None:
+    token = session_token(aither_session, authorization)
+    if not token:
+        return None
+    with connection() as conn:
+        row = conn.execute(
+            "SELECT u.id,u.name,u.email,u.email_verified,s.expires_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash = ?",
+            (token_hash(token),),
+        ).fetchone()
+    if not row or datetime.fromisoformat(row["expires_at"]) <= now():
+        return None
+    return {"id": row["id"], "name": row["name"], "email": row["email"], "email_verified": bool(row["email_verified"])}
+
+
 class RegisterRequest(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     email: str = Field(min_length=3, max_length=320)
@@ -96,8 +123,9 @@ async def register(payload: RegisterRequest, response: Response) -> dict[str, ob
             "INSERT INTO audit_logs(user_id,event,created_at) VALUES(?,?,?)",
             (user_id, "account_created", created),
         )
-    set_session_cookie(response, create_session(user_id))
-    return {"authenticated": True, "user": {"id": user_id, "name": payload.name.strip(), "email": email, "email_verified": False}}
+    session_token_value = create_session(user_id)
+    set_session_cookie(response, session_token_value)
+    return {"authenticated": True, "session_token": session_token_value, "user": {"id": user_id, "name": payload.name.strip(), "email": email, "email_verified": False}}
 
 
 @router.post("/login")
@@ -107,28 +135,22 @@ async def login(payload: LoginRequest, response: Response) -> dict[str, object]:
         row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     if not row or not verify_password(payload.password, row["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password.")
-    set_session_cookie(response, create_session(row["id"]))
-    return {"authenticated": True, "user": {"id": row["id"], "name": row["name"], "email": row["email"], "email_verified": bool(row["email_verified"])}}
+    session_token_value = create_session(row["id"])
+    set_session_cookie(response, session_token_value)
+    return {"authenticated": True, "session_token": session_token_value, "user": {"id": row["id"], "name": row["name"], "email": row["email"], "email_verified": bool(row["email_verified"])}}
 
 
 @router.post("/logout")
-async def logout(response: Response, aither_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)) -> dict[str, str]:
-    if aither_session:
+async def logout(response: Response, aither_session: str | None = Cookie(default=None, alias=SESSION_COOKIE), authorization: str | None = Header(default=None)) -> dict[str, str]:
+    token = session_token(aither_session, authorization)
+    if token:
         with connection() as conn:
-            conn.execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(aither_session),))
+            conn.execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token),))
     response.delete_cookie(SESSION_COOKIE, path="/")
     return {"status": "ok"}
 
 
 @router.get("/session")
-async def session(aither_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)) -> dict[str, object]:
-    if not aither_session:
-        return {"authenticated": False, "user": None}
-    with connection() as conn:
-        row = conn.execute(
-            "SELECT u.id,u.name,u.email,u.email_verified,s.expires_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash = ?",
-            (token_hash(aither_session),),
-        ).fetchone()
-    if not row or datetime.fromisoformat(row["expires_at"]) <= now():
-        return {"authenticated": False, "user": None}
-    return {"authenticated": True, "user": {"id": row["id"], "name": row["name"], "email": row["email"], "email_verified": bool(row["email_verified"])}}
+async def session(aither_session: str | None = Cookie(default=None, alias=SESSION_COOKIE), authorization: str | None = Header(default=None)) -> dict[str, object]:
+    user = authenticated_user(aither_session, authorization)
+    return {"authenticated": bool(user), "user": user}
