@@ -8,9 +8,9 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://localhost:5173,https://ogaithertech.github.io"
     database_url: str = "sqlite:///./aither.db"
     session_ttl_hours: int = 168
-    secure_cookies: bool = False
+    secure_cookies: bool = True
     cookie_samesite: str = "none"
-    app_url: str = "https://github.com/OGAitherTech/AitherAI"
+    app_url: str = "https://github.com/OGAitherTech/WhatTheWether"
     openrouter_api_key: str = ""
     openrouter_url: str = "https://openrouter.ai/api/v1/chat/completions"
     ai_model: str = "openai/gpt-oss-120b"
