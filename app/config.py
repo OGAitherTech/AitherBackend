@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "AitherBackend"
-    app_version: str = "2.6.0"
+    app_version: str = "2.6.1"
     environment: str = "development"
     cors_origins: str = "http://localhost:3000,http://localhost:5173,https://ogaithertech.github.io"
     database_url: str = "sqlite:///./aither.db"
@@ -12,11 +12,12 @@ class Settings(BaseSettings):
     cookie_samesite: str = "none"
     app_url: str = "https://github.com/OGAitherTech/AitherTech"
     verification_base_url: str = "https://aitherbackend.onrender.com"
-    smtp_host: str = ""
+    # Resend SMTP defaults. Keep the API key/password in the hosting environment, never in Git.
+    smtp_host: str = "smtp.resend.com"
     smtp_port: int = 587
-    smtp_username: str = ""
+    smtp_username: str = "resend"
     smtp_password: str = ""
-    smtp_from_email: str = ""
+    smtp_from_email: str = "onboarding@resend.dev"
     smtp_from_name: str = "Aither"
     verification_token_hours: int = 24
     openrouter_api_key: str = ""
