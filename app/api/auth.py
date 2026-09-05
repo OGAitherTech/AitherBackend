@@ -3,10 +3,14 @@ from __future__ import annotations
 import hashlib
 import hmac
 import secrets
+import smtplib
 import uuid
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
+from urllib.parse import quote
 
-from fastapi import APIRouter, Cookie, Header, HTTPException, Response
+from fastapi import APIRouter, Cookie, Header, HTTPException, Query, Response
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from app.config import settings
@@ -96,6 +100,36 @@ def authenticated_user(aither_session: str | None, authorization: str | None) ->
     return {"id": row["id"], "name": row["name"], "email": row["email"], "email_verified": bool(row["email_verified"])}
 
 
+def create_verification_token(user_id: str) -> str:
+    raw = secrets.token_urlsafe(48)
+    created = now()
+    expires = created + timedelta(hours=settings.verification_token_hours)
+    with connection() as conn:
+        conn.execute("DELETE FROM email_verification_tokens WHERE user_id = ?", (user_id,))
+        conn.execute(
+            "INSERT INTO email_verification_tokens(token_hash,user_id,created_at,expires_at) VALUES(?,?,?,?)",
+            (token_hash(raw), user_id, created.isoformat(), expires.isoformat()),
+        )
+    return raw
+
+
+def send_verification_email(name: str, email: str, token: str) -> None:
+    if not settings.smtp_host or not settings.smtp_username or not settings.smtp_password or not settings.smtp_from_email:
+        raise RuntimeError("Email delivery is not configured. Set SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD, and SMTP_FROM_EMAIL.")
+    link = f"{settings.verification_base_url.rstrip('/')}/api/auth/verify?token={quote(token)}"
+    message = EmailMessage()
+    message["Subject"] = "Verify your Aither Account email"
+    message["From"] = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
+    message["To"] = email
+    message.set_content(
+        f"Hi {name},\n\nVerify your Aither Account email by opening this link:\n{link}\n\nThis link expires in {settings.verification_token_hours} hours.\n\nIf you did not create an Aither Account, you can ignore this email.\n\n— Aither"
+    )
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as server:
+        server.starttls()
+        server.login(settings.smtp_username, settings.smtp_password)
+        server.send_message(message)
+
+
 class RegisterRequest(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     email: str = Field(min_length=3, max_length=320)
@@ -129,8 +163,13 @@ async def register(payload: RegisterRequest, response: Response) -> dict[str, ob
             (user_id, "account_created", created),
         )
     session_token_value = create_session(user_id)
+    verification_token = create_verification_token(user_id)
+    try:
+        send_verification_email(name, email, verification_token)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Account created, but the verification email could not be sent: {exc}") from exc
     set_session_cookie(response, session_token_value)
-    return {"authenticated": True, "session_token": session_token_value, "user": user_payload(user_id, name, email, False)}
+    return {"authenticated": True, "session_token": session_token_value, "user": user_payload(user_id, name, email, False), "verification_sent": True}
 
 
 @router.post("/login")
@@ -143,6 +182,46 @@ async def login(payload: LoginRequest, response: Response) -> dict[str, object]:
     session_token_value = create_session(row["id"])
     set_session_cookie(response, session_token_value)
     return {"authenticated": True, "session_token": session_token_value, "user": user_payload(row["id"], row["name"], row["email"], bool(row["email_verified"]))}
+
+
+@router.post("/verify/resend")
+async def resend_verification(
+    response: Response,
+    aither_session: str | None = Cookie(default=None, alias=SESSION_COOKIE),
+    authorization: str | None = Header(default=None),
+) -> dict[str, object]:
+    user = authenticated_user(aither_session, authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Sign in first.")
+    if user["email_verified"]:
+        return {"sent": False, "already_verified": True}
+    token = create_verification_token(str(user["id"]))
+    try:
+        send_verification_email(str(user["name"]), str(user["email"]), token)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"The verification email could not be sent: {exc}") from exc
+    return {"sent": True}
+
+
+@router.get("/verify", response_class=HTMLResponse)
+async def verify_email(token: str = Query(min_length=20)) -> str:
+    with connection() as conn:
+        row = conn.execute(
+            "SELECT user_id,expires_at FROM email_verification_tokens WHERE token_hash = ?",
+            (token_hash(token),),
+        ).fetchone()
+        if not row:
+            return "<html><body><h1>Invalid verification link</h1><p>This Aither verification link is invalid or has already been used.</p></body></html>"
+        if datetime.fromisoformat(row["expires_at"]) <= now():
+            conn.execute("DELETE FROM email_verification_tokens WHERE token_hash = ?", (token_hash(token),))
+            return "<html><body><h1>Verification link expired</h1><p>Please request a new Aither verification email.</p></body></html>"
+        conn.execute("UPDATE users SET email_verified = 1 WHERE id = ?", (row["user_id"],))
+        conn.execute("DELETE FROM email_verification_tokens WHERE token_hash = ?", (token_hash(token),))
+        conn.execute(
+            "INSERT INTO audit_logs(user_id,event,created_at) VALUES(?,?,?)",
+            (row["user_id"], "email_verified", now().isoformat()),
+        )
+    return "<html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head><body><h1>Email verified</h1><p>Your Aither Account email is now verified. You can return to any Aither app and refresh your account status.</p></body></html>"
 
 
 @router.post("/logout")
@@ -162,8 +241,6 @@ async def session(
     authorization: str | None = Header(default=None),
 ) -> dict[str, object]:
     user = authenticated_user(aither_session, authorization)
-    # Refresh the browser cookie whenever a valid bearer token is supplied.
-    # This lets apps recover from browsers that temporarily discard a cross-site cookie.
     token = bearer_token(authorization)
     if user and token:
         set_session_cookie(response, token)
