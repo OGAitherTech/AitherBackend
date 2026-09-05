@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "AitherBackend"
-    app_version: str = "2.5.0"
+    app_version: str = "2.5.1"
     environment: str = "development"
     cors_origins: str = "http://localhost:3000,http://localhost:5173,https://ogaithertech.github.io"
     database_url: str = "sqlite:///./aither.db"
@@ -21,7 +21,16 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        origins = [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        required_origins = {
+            "https://ogaithertech.github.io",
+            "http://localhost:3000",
+            "http://localhost:5173",
+        }
+        for origin in required_origins:
+            if origin not in origins:
+                origins.append(origin)
+        return origins
 
     @property
     def session_cookie_samesite(self) -> str:
