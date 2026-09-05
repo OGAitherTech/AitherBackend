@@ -33,12 +33,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# GitHub Pages may be served from the main AitherTech site or another
+# repository under the same GitHub Pages account. Keep the explicit list
+# for known production origins, while the regex provides a safe fallback
+# for Aither's own *.github.io static deployments.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
+    allow_origin_regex=r"^https://[a-zA-Z0-9-]+\.github\.io$|^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Accept", "Content-Type", "Authorization"],
+    allow_headers=["Accept", "Content-Type", "Authorization", "X-Requested-With"],
     expose_headers=["Content-Type"],
     max_age=86400,
 )
