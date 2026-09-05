@@ -8,6 +8,7 @@ from app.api.ai import router as ai_router
 from app.api.apps import router as apps_router
 from app.api.auth import router as auth_router
 from app.api.config import router as config_router
+from app.api.data import router as data_router
 from app.api.health import router as health_router
 from app.api.healthz import router as healthz_router
 from app.api.notifications import router as notifications_router
@@ -44,6 +45,7 @@ app.include_router(status_router)
 app.include_router(auth_router)
 app.include_router(ai_router)
 app.include_router(apps_router)
+app.include_router(data_router)
 app.include_router(updates_router)
 app.include_router(health_router)
 app.include_router(healthz_router)
