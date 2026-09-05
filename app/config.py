@@ -3,9 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "AitherBackend"
-    app_version: str = "2.4.0"
+    app_version: str = "2.5.0"
     environment: str = "development"
-    # All GitHub Pages Aither project sites share the same web origin.
     cors_origins: str = "http://localhost:3000,http://localhost:5173,https://ogaithertech.github.io"
     database_url: str = "sqlite:///./aither.db"
     session_ttl_hours: int = 168
