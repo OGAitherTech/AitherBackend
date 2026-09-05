@@ -107,17 +107,22 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=200)
 
 
+def user_payload(row_or_id: object, name: str, email: str, verified: bool) -> dict[str, object]:
+    return {"id": row_or_id, "name": name, "email": email, "email_verified": verified}
+
+
 @router.post("/register", status_code=201)
 async def register(payload: RegisterRequest, response: Response) -> dict[str, object]:
     email = payload.email.strip().lower()
+    name = payload.name.strip()
     with connection() as conn:
         if conn.execute("SELECT 1 FROM users WHERE email = ?", (email,)).fetchone():
-            raise HTTPException(status_code=409, detail="An account with this email already exists.")
+            raise HTTPException(status_code=409, detail="An account with this email already exists. Sign in instead.")
         user_id = str(uuid.uuid4())
         created = now().isoformat()
         conn.execute(
             "INSERT INTO users(id,name,email,password_hash,created_at) VALUES(?,?,?,?,?)",
-            (user_id, payload.name.strip(), email, hash_password(payload.password), created),
+            (user_id, name, email, hash_password(payload.password), created),
         )
         conn.execute(
             "INSERT INTO audit_logs(user_id,event,created_at) VALUES(?,?,?)",
@@ -125,7 +130,7 @@ async def register(payload: RegisterRequest, response: Response) -> dict[str, ob
         )
     session_token_value = create_session(user_id)
     set_session_cookie(response, session_token_value)
-    return {"authenticated": True, "session_token": session_token_value, "user": {"id": user_id, "name": payload.name.strip(), "email": email, "email_verified": False}}
+    return {"authenticated": True, "session_token": session_token_value, "user": user_payload(user_id, name, email, False)}
 
 
 @router.post("/login")
@@ -137,7 +142,7 @@ async def login(payload: LoginRequest, response: Response) -> dict[str, object]:
         raise HTTPException(status_code=401, detail="Invalid email or password.")
     session_token_value = create_session(row["id"])
     set_session_cookie(response, session_token_value)
-    return {"authenticated": True, "session_token": session_token_value, "user": {"id": row["id"], "name": row["name"], "email": row["email"], "email_verified": bool(row["email_verified"])}}
+    return {"authenticated": True, "session_token": session_token_value, "user": user_payload(row["id"], row["name"], row["email"], bool(row["email_verified"]))}
 
 
 @router.post("/logout")
@@ -151,6 +156,15 @@ async def logout(response: Response, aither_session: str | None = Cookie(default
 
 
 @router.get("/session")
-async def session(aither_session: str | None = Cookie(default=None, alias=SESSION_COOKIE), authorization: str | None = Header(default=None)) -> dict[str, object]:
+async def session(
+    response: Response,
+    aither_session: str | None = Cookie(default=None, alias=SESSION_COOKIE),
+    authorization: str | None = Header(default=None),
+) -> dict[str, object]:
     user = authenticated_user(aither_session, authorization)
+    # Refresh the browser cookie whenever a valid bearer token is supplied.
+    # This lets apps recover from browsers that temporarily discard a cross-site cookie.
+    token = bearer_token(authorization)
+    if user and token:
+        set_session_cookie(response, token)
     return {"authenticated": bool(user), "user": user}
