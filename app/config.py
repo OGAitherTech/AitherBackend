@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "AitherBackend"
-    app_version: str = "2.6.1"
+    app_version: str = "2.7.0"
     environment: str = "development"
     cors_origins: str = "http://localhost:3000,http://localhost:5173,https://ogaithertech.github.io"
     database_url: str = "sqlite:///./aither.db"
@@ -12,7 +12,6 @@ class Settings(BaseSettings):
     cookie_samesite: str = "none"
     app_url: str = "https://github.com/OGAitherTech/AitherTech"
     verification_base_url: str = "https://aitherbackend.onrender.com"
-    # Resend SMTP defaults. Keep the API key/password in the hosting environment, never in Git.
     smtp_host: str = "smtp.resend.com"
     smtp_port: int = 587
     smtp_username: str = "resend"
@@ -25,6 +24,7 @@ class Settings(BaseSettings):
     ai_model: str = "openai/gpt-oss-120b"
     ai_temperature: float = 0.7
     ai_timeout_seconds: float = 90.0
+    admin_emails: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -49,6 +49,10 @@ class Settings(BaseSettings):
         if value == "none" and not self.secure_cookies:
             return "lax"
         return value
+
+    @property
+    def admin_email_list(self) -> set[str]:
+        return {email.strip().lower() for email in self.admin_emails.split(",") if email.strip()}
 
 
 settings = Settings()
