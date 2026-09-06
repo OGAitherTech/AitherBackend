@@ -35,9 +35,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Keep CORS simple and reliable for every Aither GitHub Pages app.
-# The previous regex used double-escaped dots inside a raw Python string,
-# which caused browser preflight requests to return 400.
+# Reliable CORS for all Aither GitHub Pages apps.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
