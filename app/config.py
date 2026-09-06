@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     smtp_from_email: str = "onboarding@resend.dev"
     smtp_from_name: str = "Aither"
     verification_token_hours: int = 24
+    google_client_id: str = "37432134429-os2q3m508oljig5kqpef7d18dpjr2fif.apps.googleusercontent.com"
     openrouter_api_key: str = ""
     openrouter_url: str = "https://openrouter.ai/api/v1/chat/completions"
     ai_model: str = "openai/gpt-oss-120b"
