@@ -10,6 +10,7 @@ from app.api.apps import router as apps_router
 from app.api.auth import router as auth_router
 from app.api.config import router as config_router
 from app.api.data import router as data_router
+from app.api.google_auth import router as google_auth_router
 from app.api.health import router as health_router
 from app.api.healthz import router as healthz_router
 from app.api.notifications import router as notifications_router
@@ -37,7 +38,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
-    allow_origin_regex=r"^https://[a-zA-Z0-9-]+\.github\.io$|^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=r"^https://[a-zA-Z0-9-]+\\.github\\.io$|^https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Accept", "Content-Type", "Authorization", "X-Requested-With"],
@@ -47,6 +48,7 @@ app.add_middleware(
 
 app.include_router(status_router)
 app.include_router(auth_router)
+app.include_router(google_auth_router)
 app.include_router(admin_router)
 app.include_router(ai_router)
 app.include_router(apps_router)
