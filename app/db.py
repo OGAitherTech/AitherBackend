@@ -66,6 +66,7 @@ def init_db() -> None:
                 event TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
             CREATE TABLE IF NOT EXISTS user_app_data (
                 user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 app_id TEXT NOT NULL,
@@ -74,5 +75,15 @@ def init_db() -> None:
                 PRIMARY KEY (user_id, app_id)
             );
             CREATE INDEX IF NOT EXISTS idx_user_app_data_user_id ON user_app_data(user_id);
+            CREATE TABLE IF NOT EXISTS telemetry_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                app_id TEXT NOT NULL,
+                event TEXT NOT NULL,
+                details_json TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_telemetry_created_at ON telemetry_events(created_at);
+            CREATE INDEX IF NOT EXISTS idx_telemetry_app_id ON telemetry_events(app_id);
             """
         )
