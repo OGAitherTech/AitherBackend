@@ -38,7 +38,8 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
-    allow_origin_regex=r"^https://[a-zA-Z0-9-]+\\.github\\.io$|^https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?$",
+    # Correctly match GitHub Pages origins. The old pattern was over-escaped.
+    allow_origin_regex=r"^https://[a-zA-Z0-9-]+\.github\.io$|^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Accept", "Content-Type", "Authorization", "X-Requested-With"],
