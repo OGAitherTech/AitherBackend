@@ -3,14 +3,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "AitherBackend"
-    app_version: str = "2.7.0"
+    app_version: str = "2.7.1"
     environment: str = "development"
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,https://ogaithertech.github.io"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,https://aitherforge.github.io"
     database_url: str = "sqlite:///./aither.db"
     session_ttl_hours: int = 168
     secure_cookies: bool = True
     cookie_samesite: str = "none"
-    app_url: str = "https://github.com/OGAitherTech/AitherTech"
+    app_url: str = "https://aitherforge.github.io"
     verification_base_url: str = "https://aitherbackend.onrender.com"
     smtp_host: str = "smtp.resend.com"
     smtp_port: int = 587
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         origins = [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
         required_origins = {
-            "https://ogaithertech.github.io",
+            "https://aitherforge.github.io",
             "http://localhost:3000",
             "http://localhost:5173",
         }
