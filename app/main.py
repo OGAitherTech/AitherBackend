@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.admin import router as admin_router
 from app.api.ai import router as ai_router
 from app.api.apps import router as apps_router
 from app.api.auth import router as auth_router
@@ -33,10 +34,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# GitHub Pages may be served from the main AitherTech site or another
-# repository under the same GitHub Pages account. Keep the explicit list
-# for known production origins, while the regex provides a safe fallback
-# for Aither's own *.github.io static deployments.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -50,6 +47,7 @@ app.add_middleware(
 
 app.include_router(status_router)
 app.include_router(auth_router)
+app.include_router(admin_router)
 app.include_router(ai_router)
 app.include_router(apps_router)
 app.include_router(data_router)
