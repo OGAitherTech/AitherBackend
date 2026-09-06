@@ -35,10 +35,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Keep CORS simple and reliable for every Aither GitHub Pages app.
+# The previous regex used double-escaped dots inside a raw Python string,
+# which caused browser preflight requests to return 400.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
-    # Correctly match GitHub Pages origins. The old pattern was over-escaped.
     allow_origin_regex=r"^https://[a-zA-Z0-9-]+\.github\.io$|^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -65,12 +67,22 @@ app.include_router(weather_router)
 
 @app.get("/")
 async def root() -> dict[str, str]:
-    return {"name": settings.app_name, "status": "online", "version": settings.app_version, "environment": settings.environment, "docs": "/docs"}
+    return {
+        "name": settings.app_name,
+        "status": "online",
+        "version": settings.app_version,
+        "environment": settings.environment,
+        "docs": "/docs",
+    }
 
 
 @app.get("/api/health")
 async def health() -> dict[str, object]:
-    return {"status": "healthy", "service": settings.app_name, "timestamp": datetime.now(timezone.utc).isoformat()}
+    return {
+        "status": "healthy",
+        "service": settings.app_name,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @app.get("/api/version")
